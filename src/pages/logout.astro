@@ -1,0 +1,7 @@
+---
+import Baselayout from "../layouts/Baselayout.astro";
+import { blogDatabase } from "../services/databaseService";
+
+await blogDatabase.auth.signOut();
+return Astro.redirect("/");
+---

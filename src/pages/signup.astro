@@ -1,0 +1,61 @@
+---
+import Baselayout from "../layouts/Baselayout.astro";
+export const prerender = false;
+
+import { blogDatabase } from "../services/databaseService";
+
+let message = "";
+let error = "";
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+
+  const email = (formData.get("email") ?? "").toString().trim();
+  const password = (formData.get("password") ?? "").toString();
+
+  if (!email || !password) {
+    error = "Email and password are required.";
+  } else {
+    const { error: signUpError } = await blogDatabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (signUpError) {
+      error = signUpError.message;
+    } else {
+      return Astro.redirect("/login");
+    }
+  }
+}
+---
+
+<html>
+  <Baselayout>
+  <body>
+    <h1>Sign up</h1>
+
+    {message && <p style="color: green;">{message}</p>}
+    {error && <p style="color: red;">{error}</p>}
+
+    <form method="POST"  enctype="application/x-www-form-urlencoded">
+      <label>
+        Email:
+        <input name="email" type="email" required />
+      </label>
+      <br />
+
+      <label>
+        Password:
+        <input name="password" type="password" minlength="6" required />
+      </label>
+      <br />
+
+      <button type="submit">Create account</button>
+    </form>
+
+    <p><a href="/login">Already have an account? Log in</a></p>
+    <p><a href="/">Back home</a></p>
+  </body>
+  </Baselayout>
+</html>

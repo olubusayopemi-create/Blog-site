@@ -1,0 +1,47 @@
+---
+export  const prerender = false;
+import Baselayout from "../layouts/Baselayout.astro";
+import { blogDatabase } from "../services/databaseService";
+
+let error = "";
+
+if (Astro.request.method === "POST") {
+  const bodyText = await Astro.request.text();
+  const params = new URLSearchParams(bodyText);
+
+  const email = (params.get("email") ?? "").trim();
+  const password = (params.get("password") ?? "").trim();
+
+  if (!email || !password) {
+    error = "Email and password are required.";
+  } else {
+    const { error: loginError } = await blogDatabase.auth.signInWithPassword({ email, password });
+
+    if (loginError) error = loginError.message;
+    else return Astro.redirect("/");
+  }
+}
+---
+<Baselayout>
+  <h1>Log in</h1>
+
+  {error && <p style="color:red;">{error}</p>}
+
+  <form method="POST" action="/login" enctype="application/x-www-form-urlencoded">
+    <label>
+      Email:
+      <input type="email" name="email" required />
+    </label>
+
+    <br />
+
+    <label>
+      Password:
+      <input type="password" name="password" required />
+    </label>
+
+    <br />
+
+    <button type="submit">Log in</button>
+  </form>
+</Baselayout>

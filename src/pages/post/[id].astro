@@ -1,0 +1,124 @@
+---
+const postId = Astro.params.id;
+import Baselayout from "../../layouts/Baselayout.astro";
+export const prerender = false;
+import { blogDatabase } from "../../services/databaseService";
+
+let error = "";
+let commentValue = "";
+
+// logged in user
+const { data: userData } = await blogDatabase.auth.getUser();
+const user = userData?.user ?? null;
+
+// Handle comment submit
+if (Astro.request.method === "POST") {
+  if (!user) {
+    return Astro.redirect("/login");
+  }
+
+  const formData = await Astro.request.formData();
+  commentValue = (formData.get("content") ?? "").toString().trim();
+
+  if (!commentValue) {
+    error = "Comment cannot be empty.";
+  } else {
+    const { error: insertError } = await blogDatabase
+      .from("comments")
+      .insert({
+        post_id: postId,
+        user_id: user.id,
+        content: commentValue,
+      });
+
+    if (insertError) {
+      error = insertError.message;
+    } else {
+      // Refresh page so comment shows immediately
+      return Astro.redirect(`/post/${postId}`);
+    }
+  }
+}
+
+// Fetch the post
+const { data: post, error: postError } = await blogDatabase
+  .from("posts")
+  .select("id, title, content, created_at, user_id, image_url")
+  .eq("id", postId)
+  .single();
+  const imageUrl = post?.image_url?.trim();
+
+if (postError) error = postError.message;
+
+// Build a public URL for the image (from Supabase Storage)
+let postImagePublicUrl = "";
+
+if (post?.image_url) {
+  const { data } = blogDatabase.storage
+    .from("post-images") // ✅ your bucket name
+    .getPublicUrl(post.image_url);
+
+  postImagePublicUrl = data.publicUrl;
+}
+
+// Fetch comments for this post
+const { data: comments, error: commentsError } = await blogDatabase
+  .from("comments")
+  .select("id, content, created_at, user_id")
+  .eq("post_id", postId)
+  .order("created_at", { ascending: true });
+
+if (commentsError) error = commentsError.message;
+---
+
+<Baselayout>
+  {post ? (
+    <>
+      <h1>{post.title}</h1>
+      {imageUrl && (
+      <img class="post-image" src={imageUrl} alt={`Image for ${post.title}`} />
+      )}
+
+      <p>{post.content}</p>
+      <hr />
+
+      <h2>Comments</h2>
+
+      {error && <p style="color:red;">{error}</p>}
+
+      {comments && comments.length > 0 ? (
+        <ul>
+          {comments.map((c) => (
+            <li>
+              <p>{c.content}</p>
+              <small>{new Date(c.created_at).toLocaleString()}</small>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No comments yet.</p>
+      )}
+
+      <hr />
+
+      {user ? (
+        <form method="POST">
+          <label>
+            Add a comment:
+            <br />
+            <textarea name="content" rows="4" cols="50" required>{commentValue}</textarea>
+          </label>
+
+          <br /><br />
+          <button type="submit">Post Comment</button>
+        </form>
+      ) : (
+        <p>
+          <a href="/login">Log in</a> to comment.
+        </p>
+      )}
+    </>
+  ) : (
+    <p>Post not found.</p>
+  )}
+</Baselayout>

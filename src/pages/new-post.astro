@@ -1,0 +1,116 @@
+---
+import Baselayout from "../layouts/Baselayout.astro";
+export  const prerender = false
+import { blogDatabase } from "../services/databaseService";
+
+let error = "";
+let message = "";
+const { data: { user } } = await blogDatabase.auth.getUser();
+if (!user) return Astro.redirect("/login");
+
+if (Astro.request.method === "POST") {
+  const fd = await Astro.request.formData();
+
+  const title = (fd.get("title") ?? "").toString().trim();
+  const content = (fd.get("content") ?? "").toString().trim();
+  const imageFile = fd.get("image"); // name="image" in your form
+
+  if (!title || !content) {
+    error = "Title and content are required.";
+  } else {
+    // 1) upload image (optional)
+    let image_url = null;
+
+    if (imageFile instanceof File && imageFile.size > 0) {
+      const fileExt = imageFile.name.split(".").pop();
+      const filePath = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
+
+      const { error: uploadError } = await blogDatabase.storage
+        .from("post-images") // your bucket name
+        .upload(filePath, imageFile, {
+          contentType: imageFile.type,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        error = uploadError.message;
+      } else {
+        const { data } = blogDatabase.storage
+          .from("post-images")
+          .getPublicUrl(filePath);
+
+        image_url = data.publicUrl;
+      }
+    }
+
+    // 2) save post (with image_url)
+    if (!error) {
+      const { error: insertError } = await blogDatabase
+        .from("posts")
+        .insert([{ title, content, user_id: user.id, image_url }]);
+
+      if (insertError) {
+        error = insertError.message;
+      } else {
+        return Astro.redirect("/");
+      }
+    }
+  }
+}
+---
+
+<html lang="en">
+<Baselayout>
+  <body>
+    <h1>New Post</h1>
+
+    {message && <p style="color: green;">{message}</p>}
+    {error && <p style="color: red;">{error}</p>}
+
+    <form method="POST" action="/new-post" enctype="multipart/form-data">
+      <label>
+        Title:
+        <input name="title" type="text" required />
+      </label>
+
+      <br /><br />
+
+      <label>
+        Content:
+        <textarea name="content" rows="6" cols="40" required></textarea>
+      </label>
+
+      <br /><br />
+     <div class="form-actions">
+  <label for="image" class="file-label">Add photo</label>
+
+  <input
+    id="image"
+    type="file"
+    name="image"
+    accept="image/*"
+    hidden
+  />
+
+  <button type="submit" class="post-btn">Post</button>
+</div>
+    </form>
+
+    <script is:inline>
+  const input = document.getElementById("image");
+  const fileName = document.getElementById("fileName");
+
+  input?.addEventListener("change", () => {
+    fileName.textContent =
+      input.files && input.files.length > 0
+        ? input.files[0].name
+        : "No file selected";
+  });
+</script>
+
+    <p><a href="/">Back home</a></p>
+
+    
+  </body>
+</html>
+</Baselayout>

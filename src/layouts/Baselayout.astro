@@ -1,0 +1,39 @@
+---
+import "../styles/global.css";
+const isHome = Astro.url.pathname === "/";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pals Blog Space</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+   href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+   rel="stylesheet"
+/>
+  </head>
+
+  <body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="/" class="site-logo">
+        <img src="/logo.png" alt="Pals blog site logo" class="logo-img" />
+        <span class="site-name">Pals blog site</span>
+      </a>
+
+      <nav class="header-nav">
+       {!isHome && <a href="/" class="home-btn">Back Home</a>}
+        <slot name="nav" />
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <slot />
+  </main>
+</body>
