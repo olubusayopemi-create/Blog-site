@@ -32,7 +32,7 @@ if (Astro.request.method === "POST") {
 
 <html>
   <Baselayout>
-  <body>
+    <div class="page-wrapper">
     <h1>Sign up</h1>
 
     {message && <p style="color: green;">{message}</p>}
@@ -56,6 +56,6 @@ if (Astro.request.method === "POST") {
 
     <p><a href="/login">Already have an account? Log in</a></p>
     <p><a href="/">Back home</a></p>
-  </body>
+    </div>
   </Baselayout>
 </html>

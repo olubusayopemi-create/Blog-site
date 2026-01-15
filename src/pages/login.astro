@@ -23,6 +23,7 @@ if (Astro.request.method === "POST") {
 }
 ---
 <Baselayout>
+ <div class="page-wrapper">
   <h1>Log in</h1>
 
   {error && <p style="color:red;">{error}</p>}
@@ -44,4 +45,5 @@ if (Astro.request.method === "POST") {
 
     <button type="submit">Log in</button>
   </form>
+  </div>
 </Baselayout>

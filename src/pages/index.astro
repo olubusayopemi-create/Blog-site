@@ -6,7 +6,7 @@ import { blogDatabase } from "../services/databaseService";
 
 const { data: { user } } = await blogDatabase.auth.getUser();
 
-// Handle delete
+
 if (Astro.request.method === "POST") {
   const body = await Astro.request.text();
   const params = new URLSearchParams(body);
@@ -18,7 +18,7 @@ if (Astro.request.method === "POST") {
   }
 }
 
-// Fetch last 5 posts (newest first)
+
 const { data: posts, error } = await blogDatabase
   .from("posts")
   .select("id, title, content, created_at, user_id, image_url")
@@ -40,7 +40,28 @@ const { data: posts, error } = await blogDatabase
     </>
   )}
 </Fragment>
+<section class="hero">
+  <div class="hero__content">
+    <div class="hero__text">
+      <h1 class="hero__title">Welcome to Pals Blog Space</h1>
+      <p class="hero__subtitle">
+        A space where you can make new pals, have fun, and be free.
+        Share your stories, connect with people, and feel at home.
+      </p>
 
+      <div class="hero__actions">
+        <a class="btn btn--primary" href="/login">Log in</a>
+        <a class="btn btn--secondary" href="/signup">Sign up</a>
+      </div>
+    </div>
+
+    <div class="hero__image">
+      <img src="/image/hero.jpg" alt="Pals Blog Space" />
+    </div>
+  </div>
+</section>
+
+<div class="page-wrapper">
   <h1>Latest Posts</h1>
   {error && <p class="error">{error.message}</p>}
 
@@ -88,4 +109,5 @@ const { data: posts, error } = await blogDatabase
 ) : (
   <p>No posts yet.</p>
 )}
+</div>
 </Baselayout>

@@ -5,24 +5,24 @@ import { blogDatabase } from "../../services/databaseService";
 
 const { id } = Astro.params;
 
-// Get logged-in user
+
 const { data: { user } } = await blogDatabase.auth.getUser();
 
-// Fetch post
+
 const { data: post } = await blogDatabase
   .from("posts")
   .select("*")
   .eq("id", id)
   .single();
 
-// Fetch comments
+
 const { data: comments } = await blogDatabase
   .from("comments")
   .select("id, content, created_at, user_id")
   .eq("post_id", id)
   .order("created_at", { ascending: true });
 
-// Handle new comment
+
 let error = "";
 
 if (Astro.request.method === "POST" && user) {

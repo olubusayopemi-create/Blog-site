@@ -7,11 +7,11 @@ import { blogDatabase } from "../../services/databaseService";
 let error = "";
 let commentValue = "";
 
-// logged in user
+
 const { data: userData } = await blogDatabase.auth.getUser();
 const user = userData?.user ?? null;
 
-// Handle comment submit
+
 if (Astro.request.method === "POST") {
   if (!user) {
     return Astro.redirect("/login");
@@ -34,13 +34,13 @@ if (Astro.request.method === "POST") {
     if (insertError) {
       error = insertError.message;
     } else {
-      // Refresh page so comment shows immediately
+      
       return Astro.redirect(`/post/${postId}`);
     }
   }
 }
 
-// Fetch the post
+
 const { data: post, error: postError } = await blogDatabase
   .from("posts")
   .select("id, title, content, created_at, user_id, image_url")
@@ -50,18 +50,18 @@ const { data: post, error: postError } = await blogDatabase
 
 if (postError) error = postError.message;
 
-// Build a public URL for the image (from Supabase Storage)
+
 let postImagePublicUrl = "";
 
 if (post?.image_url) {
   const { data } = blogDatabase.storage
-    .from("post-images") // ✅ your bucket name
+    .from("post-images")
     .getPublicUrl(post.image_url);
 
   postImagePublicUrl = data.publicUrl;
 }
 
-// Fetch comments for this post
+
 const { data: comments, error: commentsError } = await blogDatabase
   .from("comments")
   .select("id, content, created_at, user_id")
@@ -72,6 +72,7 @@ if (commentsError) error = commentsError.message;
 ---
 
 <Baselayout>
+  <div class="page-wrapper">
   {post ? (
     <>
       <h1>{post.title}</h1>
@@ -121,4 +122,5 @@ if (commentsError) error = commentsError.message;
   ) : (
     <p>Post not found.</p>
   )}
+  </div>
 </Baselayout>
